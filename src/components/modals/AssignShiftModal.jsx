@@ -38,7 +38,15 @@ export function AssignShiftModal({
     }
   };
 
+  // Orden: Noche, Mañana, Tarde
   const shiftTypes = [
+    {
+      id: 'night',
+      label: 'Noche',
+      icon: Moon,
+      color: 'indigo',
+      time: '00:00 - 07:00'
+    },
     {
       id: 'morning',
       label: 'Mañana',
@@ -52,13 +60,6 @@ export function AssignShiftModal({
       icon: Sunset,
       color: 'orange',
       time: '16:00 - 23:00'
-    },
-    {
-      id: 'night',
-      label: 'Noche',
-      icon: Moon,
-      color: 'indigo',
-      time: '00:00 - 07:00'
     }
   ];
 
