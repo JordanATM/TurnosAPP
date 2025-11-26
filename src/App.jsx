@@ -4,18 +4,25 @@ import { CalendarNavigation } from './components/calendar/CalendarNavigation';
 import { CalendarGrid } from './components/calendar/CalendarGrid';
 import { ActivityModal } from './components/modals/ActivityModal';
 import { PeopleModal } from './components/modals/PeopleModal';
+import { ShiftsCalendar } from './components/shifts/ShiftsCalendar';
+import { ShiftsStats } from './components/shifts/ShiftsStats';
+import { AssignShiftModal } from './components/modals/AssignShiftModal';
 import { getDaysInMonth } from './utils';
 import { useSupabaseData } from './hooks/useSupabaseData';
+import { useShifts } from './hooks/useShifts';
 
 export default function App() {
+  const [currentView, setCurrentView] = useState('calendar'); // 'calendar' o 'shifts'
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [isPeopleModalOpen, setIsPeopleModalOpen] = useState(false);
+  const [isAssignShiftModalOpen, setIsAssignShiftModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedShiftDate, setSelectedShiftDate] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingInstanceDate, setEditingInstanceDate] = useState(null);
 
-  // Hook de Supabase para manejar todos los datos
+  // Hook de Supabase para manejar todos los datos de actividades
   const {
     people,
     activities,
@@ -31,6 +38,14 @@ export default function App() {
     handleToggleCompletion,
     handleAddDeletedInstance
   } = useSupabaseData();
+
+  // Hook para manejar los turnos (sistema independiente)
+  const {
+    shifts,
+    loading: shiftsLoading,
+    error: shiftsError,
+    handleToggleShift
+  } = useShifts(currentDate);
 
   const { days, firstDay } = getDaysInMonth(currentDate);
 
@@ -168,7 +183,12 @@ export default function App() {
     setIsActivityModalOpen(true);
   };
 
-  if (loading) {
+  const handleOpenAssignModal = (dateStr) => {
+    setSelectedShiftDate(dateStr);
+    setIsAssignShiftModalOpen(true);
+  };
+
+  if (loading || shiftsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -179,13 +199,13 @@ export default function App() {
     );
   }
 
-  if (error) {
+  if (error || shiftsError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
             <h3 className="text-red-800 font-bold text-lg mb-2">Error de Conexión</h3>
-            <p className="text-red-600 mb-4">{error}</p>
+            <p className="text-red-600 mb-4">{error || shiftsError}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
@@ -203,28 +223,59 @@ export default function App() {
       <CalendarHeader
         onNewActivity={handleNewActivity}
         onManagePeople={() => setIsPeopleModalOpen(true)}
+        currentView={currentView}
+        onViewChange={setCurrentView}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <CalendarNavigation
-          currentDate={currentDate}
-          onPreviousMonth={() => changeMonth(-1)}
-          onNextMonth={() => changeMonth(1)}
-          onToday={() => setCurrentDate(new Date())}
-        />
+        {currentView === 'calendar' ? (
+          <>
+            <CalendarNavigation
+              currentDate={currentDate}
+              onPreviousMonth={() => changeMonth(-1)}
+              onNextMonth={() => changeMonth(1)}
+              onToday={() => setCurrentDate(new Date())}
+            />
 
-        <CalendarGrid
-          currentDate={currentDate}
-          firstDay={firstDay}
-          days={days}
-          activities={activities}
-          deletedInstances={deletedInstances}
-          completedInstances={completedInstances}
-          people={people}
-          onDayClick={handleDayClick}
-          onEditActivity={handleEditActivity}
-          onToggleCompletion={toggleCompletion}
-        />
+            <CalendarGrid
+              currentDate={currentDate}
+              firstDay={firstDay}
+              days={days}
+              activities={activities}
+              deletedInstances={deletedInstances}
+              completedInstances={completedInstances}
+              people={people}
+              onDayClick={handleDayClick}
+              onEditActivity={handleEditActivity}
+              onToggleCompletion={toggleCompletion}
+            />
+          </>
+        ) : (
+          <>
+            <CalendarNavigation
+              currentDate={currentDate}
+              onPreviousMonth={() => changeMonth(-1)}
+              onNextMonth={() => changeMonth(1)}
+              onToday={() => setCurrentDate(new Date())}
+            />
+
+            <div className="space-y-6">
+              <ShiftsCalendar
+                currentDate={currentDate}
+                people={people}
+                shifts={shifts}
+                onToggleShift={handleToggleShift}
+                onOpenAssignModal={handleOpenAssignModal}
+              />
+
+              <ShiftsStats
+                currentDate={currentDate}
+                shifts={shifts}
+                people={people}
+              />
+            </div>
+          </>
+        )}
       </main>
 
       {isActivityModalOpen && (
@@ -250,6 +301,17 @@ export default function App() {
           people={people}
           onAdd={addPerson}
           onRemove={removePerson}
+        />
+      )}
+
+      {isAssignShiftModalOpen && (
+        <AssignShiftModal
+          isOpen={isAssignShiftModalOpen}
+          onClose={() => setIsAssignShiftModalOpen(false)}
+          date={selectedShiftDate}
+          people={people}
+          shifts={shifts}
+          onToggleShift={handleToggleShift}
         />
       )}
     </div>

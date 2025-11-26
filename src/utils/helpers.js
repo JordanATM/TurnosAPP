@@ -12,3 +12,44 @@ export const getDaysInMonth = (date) => {
 export const formatDateString = (date) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
+
+/**
+ * Verifica si una actividad es visible en una fecha específica
+ * Considera: fecha de inicio, fecha de fin, instancias eliminadas, y frecuencia
+ */
+export const isActivityVisibleOnDate = (activity, dateStr, deletedInstances = []) => {
+  // Parsear la fecha de la actividad
+  const [ay, am, ad] = activity.date.split('-').map(Number);
+  const startDate = new Date(ay, am - 1, ad);
+  startDate.setHours(0, 0, 0, 0);
+
+  // Parsear la fecha a verificar
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  dateObj.setHours(0, 0, 0, 0);
+
+  // Obtener el día de la semana (0 = domingo, 6 = sábado)
+  const dayOfWeek = dateObj.getDay();
+
+  // Verificar si la fecha es anterior a la fecha de inicio
+  if (dateObj < startDate) return false;
+
+  // Verificar si hay una fecha de finalización (para "desde esta fecha")
+  if (activity.endDate) {
+    const [ey, em, ed] = activity.endDate.split('-').map(Number);
+    const endDate = new Date(ey, em - 1, ed);
+    endDate.setHours(0, 0, 0, 0);
+
+    // No mostrar si la fecha actual es igual o posterior a la fecha de finalización
+    if (dateObj >= endDate) return false;
+  }
+
+  // Verificar si esta instancia específica fue eliminada
+  const instanceKey = `${activity.id}_${dateStr}`;
+  if (deletedInstances && deletedInstances.includes(instanceKey)) return false;
+
+  // Verificar según la frecuencia
+  if (activity.frequency === 'daily') return true;
+  if (activity.frequency === 'weekdays') return dayOfWeek !== 0 && dayOfWeek !== 6;
+  return activity.date === dateStr;
+};

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Calendar, Users, Plus, LogOut, User, ChevronDown } from 'lucide-react';
+import { Calendar, Users, Plus, LogOut, User, ChevronDown, LayoutGrid, ClipboardList } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-export function CalendarHeader({ onNewActivity, onManagePeople }) {
+export function CalendarHeader({ onNewActivity, onManagePeople, currentView, onViewChange }) {
   const { user, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -25,6 +25,52 @@ export function CalendarHeader({ onNewActivity, onManagePeople }) {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* View Toggle */}
+          <div className="hidden md:flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => onViewChange('calendar')}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                currentView === 'calendar'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span>Calendario</span>
+            </button>
+            <button
+              onClick={() => onViewChange('shifts')}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                currentView === 'shifts'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span>Turnos</span>
+            </button>
+          </div>
+
+          {/* Mobile View Toggle */}
+          <div className="md:hidden">
+            <button
+              onClick={() => onViewChange(currentView === 'calendar' ? 'shifts' : 'calendar')}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              {currentView === 'calendar' ? (
+                <>
+                  <ClipboardList className="w-4 h-4" />
+                  <span>Turnos</span>
+                </>
+              ) : (
+                <>
+                  <LayoutGrid className="w-4 h-4" />
+                  <span>Calendario</span>
+                </>
+              )}
+            </button>
+          </div>
+
           <button
             onClick={onManagePeople}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
