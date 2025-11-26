@@ -7,12 +7,14 @@ import {
   Users,
   CheckCircle2,
   Edit3,
-  AlertCircle
+  AlertCircle,
+  Zap
 } from 'lucide-react';
 import { FREQUENCY } from '../../constants';
-import { getShiftFromTime } from '../../utils';
+import { getShiftFromTime, getEngineersOnShift } from '../../utils';
+import { fetchShiftsByDate } from '../../services/shiftsService';
 
-export function ActivityModal({ isOpen, onClose, onSave, onDelete, initialData, instanceDate, selectedDate, people }) {
+export function ActivityModal({ isOpen, onClose, onSave, onDelete, initialData, instanceDate, selectedDate, people, shifts = [] }) {
   const [formData, setFormData] = useState({
     title: '',
     time: '09:00',
@@ -22,8 +24,36 @@ export function ActivityModal({ isOpen, onClose, onSave, onDelete, initialData, 
   });
   const [showEditOptions, setShowEditOptions] = useState(false);
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
+  const [dateShifts, setDateShifts] = useState([]);
+  const [loadingShifts, setLoadingShifts] = useState(false);
 
   const isEditingRecurringInstance = initialData && instanceDate && initialData.frequency !== 'once';
+
+  // Calcular la fecha de la actividad
+  const dateStr = initialData
+    ? initialData.date
+    : `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+
+  const loadShiftsForDate = async () => {
+    try {
+      setLoadingShifts(true);
+      const shifts = await fetchShiftsByDate(dateStr);
+      setDateShifts(shifts);
+    } catch (error) {
+      console.error('Error loading shifts for date:', error);
+      setDateShifts([]);
+    } finally {
+      setLoadingShifts(false);
+    }
+  };
+
+  // Cargar shifts de la fecha específica cuando cambia la fecha o se abre el modal
+  useEffect(() => {
+    if (isOpen && dateStr) {
+      loadShiftsForDate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, dateStr]);
 
   useEffect(() => {
     if (initialData) {
@@ -43,6 +73,11 @@ export function ActivityModal({ isOpen, onClose, onSave, onDelete, initialData, 
 
   const currentShift = getShiftFromTime(formData.time);
 
+  // Calcular ingenieros en turno usando los shifts de la fecha específica
+  const engineersOnShift = currentShift
+    ? getEngineersOnShift(dateShifts, dateStr, currentShift.id)
+    : [];
+
   const handleSubmit = (e, saveOption = 'all') => {
     e.preventDefault();
 
@@ -52,12 +87,18 @@ export function ActivityModal({ isOpen, onClose, onSave, onDelete, initialData, 
       return;
     }
 
-    const dateStr = initialData
-      ? initialData.date
-      : `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+    // Para actividades recurrentes: si no hay assignees manuales, usar auto_assign
+    // Para actividades únicas: guardar los assignees del turno actual
+    const isRecurring = formData.frequency !== 'once';
+    const hasManualAssignees = formData.assignees.length > 0;
+
+    const shouldAutoAssign = isRecurring && !hasManualAssignees;
+    const finalAssignees = hasManualAssignees ? formData.assignees : engineersOnShift;
 
     onSave({
       ...formData,
+      assignees: shouldAutoAssign ? [] : finalAssignees,
+      auto_assign: shouldAutoAssign,
       date: dateStr,
       _displayDay: undefined
     }, saveOption);
@@ -143,6 +184,26 @@ export function ActivityModal({ isOpen, onClose, onSave, onDelete, initialData, 
               <Users className="w-4 h-4" />
               Responsables Asignados
             </label>
+
+            {/* Indicador de asignación automática */}
+            {loadingShifts ? (
+              <div className="mb-2 bg-gray-50 border border-gray-200 rounded-lg p-2.5 flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <p className="text-xs text-gray-600">Cargando turnos...</p>
+              </div>
+            ) : formData.assignees.length === 0 && engineersOnShift.length > 0 ? (
+              <div className="mb-2 bg-green-50 border border-green-200 rounded-lg p-2.5 flex items-start gap-2">
+                <Zap className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-green-700">
+                  <p className="font-semibold">Asignación automática activa</p>
+                  <p className="mt-0.5">
+                    Se asignarán automáticamente los ingenieros en turno {currentShift?.label}:{' '}
+                    {engineersOnShift.map(id => people.find(p => p.id === id)?.name).filter(Boolean).join(', ')}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             <div className="border border-gray-200 rounded-lg p-3 max-h-40 overflow-y-auto bg-gray-50">
               {people.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-2">No hay personal registrado.</p>
@@ -150,14 +211,29 @@ export function ActivityModal({ isOpen, onClose, onSave, onDelete, initialData, 
                 <div className="grid grid-cols-2 gap-2">
                   {people.map(person => {
                     const isSelected = formData.assignees.includes(person.id);
+                    const isOnShift = engineersOnShift.includes(person.id);
                     return (
                       <div
                         key={person.id}
                         onClick={() => toggleAssignee(person.id)}
-                        className={`flex items-center gap-2 p-2 rounded cursor-pointer border transition-all ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 hover:border-blue-300'}`}
+                        className={`flex items-center gap-2 p-2 rounded cursor-pointer border transition-all ${
+                          isSelected
+                            ? 'bg-blue-50 border-blue-200 text-blue-700'
+                            : isOnShift && formData.assignees.length === 0
+                              ? 'bg-green-50 border-green-200 text-green-700'
+                              : 'bg-white border-gray-200 hover:border-blue-300'
+                        }`}
                       >
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-400'}`}>
-                          {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          isSelected
+                            ? 'bg-blue-600 border-blue-600'
+                            : isOnShift && formData.assignees.length === 0
+                              ? 'bg-green-500 border-green-500'
+                              : 'border-gray-400'
+                        }`}>
+                          {(isSelected || (isOnShift && formData.assignees.length === 0)) && (
+                            <CheckCircle2 className="w-3 h-3 text-white" />
+                          )}
                         </div>
                         <span className="text-sm truncate">{person.name}</span>
                       </div>
@@ -166,25 +242,55 @@ export function ActivityModal({ isOpen, onClose, onSave, onDelete, initialData, 
                 </div>
               )}
             </div>
+            <p className="text-xs text-gray-500 mt-1.5">
+              {formData.assignees.length > 0
+                ? 'Selección manual activa'
+                : engineersOnShift.length > 0
+                  ? 'Sin selección manual - se usará asignación automática'
+                  : 'No hay ingenieros en este turno - selecciona manualmente'}
+            </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Frecuencia</label>
-            <div className="grid grid-cols-3 gap-2">
-              {Object.values(FREQUENCY).map(option => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, frequency: option.id })}
-                  className={`flex flex-col items-center justify-center p-2 rounded-lg border text-sm transition-all ${formData.frequency === option.id
-                    ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500'
-                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                >
-                  <option.icon className="w-5 h-5 mb-1" />
-                  <span className="text-xs font-medium text-center">{option.label}</span>
-                </button>
-              ))}
+            <div className="space-y-2">
+              {/* Opciones principales */}
+              <div className="grid grid-cols-3 gap-2">
+                {[FREQUENCY.ONCE, FREQUENCY.DAILY, FREQUENCY.WEEKDAYS].map(option => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, frequency: option.id })}
+                    className={`flex flex-col items-center justify-center p-2 rounded-lg border text-sm transition-all ${formData.frequency === option.id
+                      ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                  >
+                    <option.icon className="w-5 h-5 mb-1" />
+                    <span className="text-xs font-medium text-center">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Días específicos */}
+              <div>
+                <p className="text-xs text-gray-600 font-medium mb-1.5">Días específicos:</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[FREQUENCY.MONDAY, FREQUENCY.TUESDAY, FREQUENCY.WEDNESDAY, FREQUENCY.THURSDAY, FREQUENCY.FRIDAY, FREQUENCY.SATURDAY, FREQUENCY.SUNDAY].map(option => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, frequency: option.id })}
+                      className={`flex items-center justify-center px-2 py-1.5 rounded border text-xs transition-all ${formData.frequency === option.id
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500 font-semibold'
+                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                      {option.label.replace('Todos los ', '')}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             {formData.frequency !== 'once' && (
               <p className="text-xs text-gray-500 mt-2 bg-blue-50 p-2 rounded text-center">

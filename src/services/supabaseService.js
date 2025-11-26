@@ -62,6 +62,7 @@ export const fetchActivities = async () => {
   return data.map(activity => ({
     ...activity,
     endDate: activity.end_date,
+    auto_assign: activity.auto_assign || false,
     end_date: undefined
   }));
 };
@@ -75,7 +76,8 @@ export const addActivity = async (activityData) => {
     date: activityData.date,
     end_date: activityData.endDate || null,
     description: activityData.description || null,
-    assignees: activityData.assignees || []
+    assignees: activityData.assignees || [],
+    auto_assign: activityData.auto_assign || false
   };
 
   const { data, error } = await supabase
@@ -104,7 +106,8 @@ export const updateActivity = async (id, activityData) => {
     date: activityData.date,
     end_date: activityData.endDate || null,
     description: activityData.description || null,
-    assignees: activityData.assignees || []
+    assignees: activityData.assignees || [],
+    auto_assign: activityData.auto_assign || false
   };
 
   const { data, error } = await supabase

@@ -10,3 +10,18 @@ export const getShiftFromTime = (timeString) => {
 
   return SHIFTS.AFTERNOON; // Fallback seguro
 };
+
+/**
+ * Obtiene los IDs de los ingenieros que tienen un turno específico en una fecha dada
+ * @param {Array} shifts - Array de turnos
+ * @param {string} dateStr - Fecha en formato YYYY-MM-DD
+ * @param {string} shiftType - Tipo de turno: 'morning', 'afternoon', 'night'
+ * @returns {Array} - Array de IDs de personas
+ */
+export const getEngineersOnShift = (shifts, dateStr, shiftType) => {
+  if (!shifts || !dateStr || !shiftType) return [];
+
+  return shifts
+    .filter(shift => shift.date === dateStr && shift.shift_type === shiftType)
+    .map(shift => shift.person_id);
+};

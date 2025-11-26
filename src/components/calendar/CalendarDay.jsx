@@ -1,6 +1,7 @@
 import React from 'react';
-import { Plus, RefreshCcw, Briefcase, CheckCircle2, Circle } from 'lucide-react';
-import { getShiftFromTime } from '../../utils';
+import { Plus, RefreshCcw, Briefcase, CheckCircle2, Circle, Calendar } from 'lucide-react';
+import { getShiftFromTime, getEngineersOnShift } from '../../utils';
+import { FREQUENCY } from '../../constants';
 
 export function CalendarDay({
   day,
@@ -9,6 +10,7 @@ export function CalendarDay({
   deletedInstances,
   completedInstances,
   people,
+  shifts = [],
   onDayClick,
   onEditActivity,
   onToggleCompletion
@@ -45,6 +47,16 @@ export function CalendarDay({
 
       if (a.frequency === 'daily') return true;
       if (a.frequency === 'weekdays') return dayOfWeek !== 0 && dayOfWeek !== 6;
+
+      // Verificar días específicos de la semana
+      if (a.frequency === 'monday') return dayOfWeek === 1;
+      if (a.frequency === 'tuesday') return dayOfWeek === 2;
+      if (a.frequency === 'wednesday') return dayOfWeek === 3;
+      if (a.frequency === 'thursday') return dayOfWeek === 4;
+      if (a.frequency === 'friday') return dayOfWeek === 5;
+      if (a.frequency === 'saturday') return dayOfWeek === 6;
+      if (a.frequency === 'sunday') return dayOfWeek === 0;
+
       return a.date === dateStr;
     })
     .map(a => ({ ...a, _displayDay: day }))
@@ -64,6 +76,11 @@ export function CalendarDay({
           const shift = getShiftFromTime(activity.time);
           const isCompleted = completedInstances.includes(`${activity.id}_${dateStr}`);
 
+          // Para actividades con auto_assign, calcular assignees dinámicamente
+          const displayAssignees = activity.auto_assign && shift
+            ? getEngineersOnShift(shifts, dateStr, shift.id)
+            : activity.assignees;
+
           const cardStyle = isCompleted
             ? 'bg-green-50 border-green-200 text-green-800 shadow-sm'
             : `${shift.color} shadow-sm`;
@@ -81,15 +98,23 @@ export function CalendarDay({
                     <span>{activity.time}</span>
                     {activity.frequency === 'daily' && <RefreshCcw className="w-3 h-3 ml-auto opacity-60" />}
                     {activity.frequency === 'weekdays' && <Briefcase className="w-3 h-3 ml-auto opacity-60" />}
+                    {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].includes(activity.frequency) && (
+                      <Calendar className="w-3 h-3 ml-auto opacity-60" />
+                    )}
                   </div>
                   <div className={`truncate font-medium ${isCompleted ? 'line-through opacity-75' : ''}`}>
                     {activity.title}
                   </div>
-                  {activity.assignees.length > 0 && (
-                    <div className="text-[10px] mt-0.5 opacity-90 truncate">
-                      {activity.assignees.length === 1
-                        ? people.find(p => p.id === activity.assignees[0])?.name
-                        : `${activity.assignees.length} resp.`}
+                  {displayAssignees && displayAssignees.length > 0 && (
+                    <div
+                      className="text-[10px] mt-0.5 opacity-90 truncate"
+                      title={displayAssignees.map(id => people.find(p => p.id === id)?.name).filter(Boolean).join(', ')}
+                    >
+                      {displayAssignees.length === 1
+                        ? people.find(p => p.id === displayAssignees[0])?.name
+                        : displayAssignees.length === 2
+                          ? displayAssignees.map(id => people.find(p => p.id === id)?.name).filter(Boolean).join(' y ')
+                          : `${displayAssignees.map(id => people.find(p => p.id === id)?.name).filter(Boolean).join(', ')}`}
                     </div>
                   )}
                 </div>

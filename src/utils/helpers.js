@@ -51,5 +51,15 @@ export const isActivityVisibleOnDate = (activity, dateStr, deletedInstances = []
   // Verificar según la frecuencia
   if (activity.frequency === 'daily') return true;
   if (activity.frequency === 'weekdays') return dayOfWeek !== 0 && dayOfWeek !== 6;
+
+  // Verificar días específicos de la semana
+  if (activity.frequency === 'monday') return dayOfWeek === 1;
+  if (activity.frequency === 'tuesday') return dayOfWeek === 2;
+  if (activity.frequency === 'wednesday') return dayOfWeek === 3;
+  if (activity.frequency === 'thursday') return dayOfWeek === 4;
+  if (activity.frequency === 'friday') return dayOfWeek === 5;
+  if (activity.frequency === 'saturday') return dayOfWeek === 6;
+  if (activity.frequency === 'sunday') return dayOfWeek === 0;
+
   return activity.date === dateStr;
 };

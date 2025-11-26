@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Sun, Sunset, Moon, Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { Sun, Sunset, Moon, Plus, Calendar as CalendarIcon, Lock } from 'lucide-react';
 import { SHIFTS } from '../../constants/shifts';
 import { getDaysInMonth } from '../../utils/helpers';
+import { useAuth } from '../../contexts/AuthContext';
+import { isAdmin } from '../../utils/roles';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -12,6 +14,8 @@ export function ShiftsCalendar({
   onToggleShift,
   onOpenAssignModal
 }) {
+  const { user } = useAuth();
+  const userIsAdmin = isAdmin(user);
   const { days, firstDay } = getDaysInMonth(currentDate);
   const today = new Date();
   const isCurrentMonth = currentDate.getMonth() === today.getMonth() &&
@@ -42,6 +46,9 @@ export function ShiftsCalendar({
   };
 
   const handleDayClick = (day) => {
+    // Solo permitir asignar turnos si es admin
+    if (!userIsAdmin) return;
+
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     onOpenAssignModal(dateStr);
   };
@@ -60,7 +67,7 @@ export function ShiftsCalendar({
                 Calendario de Turnos
               </h2>
               <p className="text-sm text-blue-100">
-                Click en un día para asignar turnos
+                {userIsAdmin ? 'Click en un día para asignar turnos' : 'Vista de solo lectura'}
               </p>
             </div>
           </div>
@@ -122,10 +129,14 @@ export function ShiftsCalendar({
               <div
                 key={day}
                 onClick={() => handleDayClick(day)}
-                className={`min-h-[120px] border rounded-lg p-2 transition-all cursor-pointer hover:shadow-md hover:border-blue-400 ${
+                className={`min-h-[120px] border rounded-lg p-2 transition-all ${
+                  userIsAdmin
+                    ? 'cursor-pointer hover:shadow-md hover:border-blue-400'
+                    : 'cursor-default'
+                } ${
                   isToday
                     ? 'bg-blue-50 border-blue-400 shadow-sm'
-                    : 'bg-white border-gray-200 hover:bg-gray-50'
+                    : `bg-white border-gray-200 ${userIsAdmin ? 'hover:bg-gray-50' : ''}`
                 }`}
               >
                 {/* Número del día */}

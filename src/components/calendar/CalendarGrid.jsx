@@ -10,6 +10,7 @@ export function CalendarGrid({
   deletedInstances,
   completedInstances,
   people,
+  shifts,
   onDayClick,
   onEditActivity,
   onToggleCompletion
@@ -44,6 +45,7 @@ export function CalendarGrid({
               deletedInstances={deletedInstances}
               completedInstances={completedInstances}
               people={people}
+              shifts={shifts}
               onDayClick={onDayClick}
               onEditActivity={onEditActivity}
               onToggleCompletion={onToggleCompletion}

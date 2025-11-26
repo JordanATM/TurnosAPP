@@ -245,6 +245,7 @@ export default function App() {
               deletedInstances={deletedInstances}
               completedInstances={completedInstances}
               people={people}
+              shifts={shifts}
               onDayClick={handleDayClick}
               onEditActivity={handleEditActivity}
               onToggleCompletion={toggleCompletion}
@@ -291,6 +292,7 @@ export default function App() {
           instanceDate={editingInstanceDate}
           selectedDate={selectedDay ? new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDay) : new Date()}
           people={people}
+          shifts={shifts}
         />
       )}
 

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Calendar, Users, Plus, LogOut, User, ChevronDown, LayoutGrid, ClipboardList } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { isAdmin } from '../../utils/roles';
 
 export function CalendarHeader({ onNewActivity, onManagePeople, currentView, onViewChange }) {
   const { user, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const userIsAdmin = isAdmin(user);
 
   const handleLogout = async () => {
     try {
@@ -71,13 +73,16 @@ export function CalendarHeader({ onNewActivity, onManagePeople, currentView, onV
             </button>
           </div>
 
-          <button
-            onClick={onManagePeople}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-          >
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">Personal</span>
-          </button>
+          {/* Botón Personal - Solo visible para admin */}
+          {userIsAdmin && (
+            <button
+              onClick={onManagePeople}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Personal</span>
+            </button>
+          )}
           <button
             onClick={onNewActivity}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 shadow-sm transition-colors"

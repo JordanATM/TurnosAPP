@@ -18,11 +18,12 @@ CREATE TABLE IF NOT EXISTS activities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   time TEXT NOT NULL,
-  frequency TEXT NOT NULL CHECK (frequency IN ('once', 'daily', 'weekdays')),
+  frequency TEXT NOT NULL CHECK (frequency IN ('once', 'daily', 'weekdays', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')),
   date TEXT NOT NULL,
   end_date TEXT,
   description TEXT,
   assignees UUID[] DEFAULT '{}',
+  auto_assign BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

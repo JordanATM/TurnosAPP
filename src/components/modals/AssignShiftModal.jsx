@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sun, Sunset, Moon, Check, UserCircle } from 'lucide-react';
+import { X, Sun, Sunset, Moon, Check, UserCircle, Lock } from 'lucide-react';
 import { SHIFTS } from '../../constants/shifts';
+import { useAuth } from '../../contexts/AuthContext';
+import { isAdmin } from '../../utils/roles';
 
 export function AssignShiftModal({
   isOpen,
@@ -10,6 +12,9 @@ export function AssignShiftModal({
   shifts,
   onToggleShift
 }) {
+  const { user } = useAuth();
+  const userIsAdmin = isAdmin(user);
+
   if (!isOpen) return null;
 
   const dateObj = new Date(date + 'T00:00:00');
@@ -31,6 +36,9 @@ export function AssignShiftModal({
 
   // Manejar click en un turno
   const handleToggle = async (personId, shiftType) => {
+    // Solo permitir modificar turnos si es admin
+    if (!userIsAdmin) return;
+
     try {
       await onToggleShift(personId, date, shiftType);
     } catch (err) {
@@ -69,12 +77,22 @@ export function AssignShiftModal({
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-white">
-              Asignar Turnos
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-white">
+                {userIsAdmin ? 'Asignar Turnos' : 'Ver Turnos'}
+              </h2>
+              {!userIsAdmin && (
+                <Lock className="w-5 h-5 text-blue-100" />
+              )}
+            </div>
             <p className="text-sm text-blue-100 capitalize mt-1">
               {formattedDate}
             </p>
+            {!userIsAdmin && (
+              <p className="text-xs text-blue-200 mt-1">
+                Solo lectura - Contacta al administrador para modificar
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -142,10 +160,15 @@ export function AssignShiftModal({
                             <td key={shift.id} className="py-4 px-4 text-center">
                               <button
                                 onClick={() => handleToggle(person.id, shift.id)}
+                                disabled={!userIsAdmin}
                                 className={`w-12 h-12 rounded-lg border-2 transition-all ${
+                                  !userIsAdmin
+                                    ? 'cursor-not-allowed opacity-60'
+                                    : ''
+                                } ${
                                   isAssigned
-                                    ? `bg-${shift.color}-100 border-${shift.color}-400 hover:bg-${shift.color}-200`
-                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                    ? `bg-${shift.color}-100 border-${shift.color}-400 ${userIsAdmin ? `hover:bg-${shift.color}-200` : ''}`
+                                    : `bg-white border-gray-200 ${userIsAdmin ? 'hover:border-gray-300 hover:bg-gray-50' : ''}`
                                 }`}
                               >
                                 {isAssigned && (
@@ -187,8 +210,17 @@ export function AssignShiftModal({
               {/* Ayuda */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-xs text-gray-600">
-                  💡 <strong>Tip:</strong> Click en los cuadros para asignar o quitar turnos.
-                  Los cambios se guardan automáticamente.
+                  {userIsAdmin ? (
+                    <>
+                      💡 <strong>Tip:</strong> Click en los cuadros para asignar o quitar turnos.
+                      Los cambios se guardan automáticamente.
+                    </>
+                  ) : (
+                    <>
+                      🔒 <strong>Modo solo lectura:</strong> No tienes permisos para modificar turnos.
+                      Solo el administrador puede realizar cambios.
+                    </>
+                  )}
                 </p>
               </div>
             </div>
