@@ -5,6 +5,7 @@ import {
   fetchCompletedInstances,
   fetchDeletedInstances,
   addPerson,
+  updatePerson,
   deletePerson,
   addActivity,
   updateActivity,
@@ -54,13 +55,25 @@ export const useSupabaseData = () => {
 
   // ==================== PEOPLE HANDLERS ====================
 
-  const handleAddPerson = async (name) => {
+  const handleAddPerson = async (name, team = 'noc') => {
     try {
-      const newPerson = await addPerson(name);
+      const newPerson = await addPerson(name, team);
       setPeople([...people, newPerson]);
       return newPerson;
     } catch (err) {
       console.error('Error adding person:', err);
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const handleUpdatePerson = async (id, name, team) => {
+    try {
+      const updatedPerson = await updatePerson(id, name, team);
+      setPeople(people.map(p => p.id === id ? updatedPerson : p));
+      return updatedPerson;
+    } catch (err) {
+      console.error('Error updating person:', err);
       setError(err.message);
       throw err;
     }
@@ -161,6 +174,7 @@ export const useSupabaseData = () => {
 
     // People handlers
     handleAddPerson,
+    handleUpdatePerson,
     handleDeletePerson,
 
     // Activities handlers

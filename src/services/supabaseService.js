@@ -16,15 +16,31 @@ export const fetchPeople = async () => {
   return data;
 };
 
-export const addPerson = async (name) => {
+export const addPerson = async (name, team = 'noc') => {
   const { data, error } = await supabase
     .from('people')
-    .insert([{ name }])
+    .insert([{ name, team }])
     .select()
     .single();
 
   if (error) {
     console.error('Error adding person:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const updatePerson = async (id, name, team) => {
+  const { data, error } = await supabase
+    .from('people')
+    .update({ name, team })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating person:', error);
     throw error;
   }
 

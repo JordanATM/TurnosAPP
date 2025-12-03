@@ -83,6 +83,7 @@ export const addShift = async (shiftData) => {
         person_id: shiftData.personId,
         date: shiftData.date,
         shift_type: shiftData.shiftType,
+        team: shiftData.team || 'noc',
         notes: shiftData.notes || null
       }])
       .select()
@@ -105,6 +106,7 @@ export const addMultipleShifts = async (shiftsArray) => {
       person_id: shift.personId,
       date: shift.date,
       shift_type: shift.shiftType,
+      team: shift.team || 'noc',
       notes: shift.notes || null
     }));
 

@@ -23,6 +23,7 @@ export default function App() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedShiftDate, setSelectedShiftDate] = useState(null);
+  const [selectedShiftTeam, setSelectedShiftTeam] = useState('noc');
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingInstanceDate, setEditingInstanceDate] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
@@ -38,6 +39,7 @@ export default function App() {
     loading,
     error,
     handleAddPerson,
+    handleUpdatePerson,
     handleDeletePerson,
     handleAddActivity,
     handleUpdateActivity,
@@ -219,12 +221,22 @@ export default function App() {
     }
   };
 
-  const addPerson = async (name) => {
+  const addPerson = async (name, team = 'noc') => {
     if (name.trim()) {
       try {
-        await handleAddPerson(name);
+        await handleAddPerson(name, team);
       } catch (err) {
         console.error('Error adding person:', err);
+      }
+    }
+  };
+
+  const updatePerson = async (id, name, team) => {
+    if (name.trim()) {
+      try {
+        await handleUpdatePerson(id, name, team);
+      } catch (err) {
+        console.error('Error updating person:', err);
       }
     }
   };
@@ -243,8 +255,9 @@ export default function App() {
     setIsActivityModalOpen(true);
   };
 
-  const handleOpenAssignModal = (dateStr) => {
+  const handleOpenAssignModal = (dateStr, team = 'noc') => {
     setSelectedShiftDate(dateStr);
+    setSelectedShiftTeam(team);
     setIsAssignShiftModalOpen(true);
   };
 
@@ -358,7 +371,7 @@ export default function App() {
           initialData={editingActivity}
           instanceDate={editingInstanceDate}
           selectedDate={selectedDay ? new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDay) : new Date()}
-          people={people}
+          people={people.filter(p => p.team === 'noc')}
           shifts={shifts}
         />
       )}
@@ -369,6 +382,7 @@ export default function App() {
           onClose={() => setIsPeopleModalOpen(false)}
           people={people}
           onAdd={addPerson}
+          onUpdate={updatePerson}
           onRemove={removePerson}
         />
       )}
@@ -381,6 +395,7 @@ export default function App() {
           people={people}
           shifts={shifts}
           onToggleShift={handleToggleShift}
+          team={selectedShiftTeam}
         />
       )}
 

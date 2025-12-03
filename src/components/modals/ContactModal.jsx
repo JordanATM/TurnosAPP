@@ -143,13 +143,13 @@ export function ContactModal({ isOpen, onClose, onSave, initialData = null }) {
                   ? 'border-red-300 focus:ring-red-500'
                   : 'border-gray-300 focus:ring-blue-500'
               }`}
-              placeholder="Ej: +54 9 11 1234-5678"
+              placeholder="Ej: +56987654321"
             />
             {errors.phone && (
               <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Incluye el código de país para WhatsApp (Ej: +54 para Argentina)
+              Incluye el código de país para WhatsApp (Ej: +56 para Chile)
             </p>
           </div>
 

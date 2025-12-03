@@ -87,11 +87,11 @@ export const useShifts = (currentDate) => {
   /**
    * Toggle de turno: si existe lo elimina, si no existe lo crea
    */
-  const handleToggleShift = async (personId, date, shiftType) => {
+  const handleToggleShift = async (personId, date, shiftType, team = 'noc') => {
     try {
       // Buscar si ya existe el turno
       const existingShift = shifts.find(
-        s => s.person_id === personId && s.date === date && s.shift_type === shiftType
+        s => s.person_id === personId && s.date === date && s.shift_type === shiftType && s.team === team
       );
 
       if (existingShift) {
@@ -103,6 +103,7 @@ export const useShifts = (currentDate) => {
           personId,
           date,
           shiftType,
+          team,
           notes: null
         });
       }

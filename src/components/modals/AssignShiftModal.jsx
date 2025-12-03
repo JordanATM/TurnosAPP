@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sun, Sunset, Moon, Check, UserCircle, Lock } from 'lucide-react';
+import { X, Sun, Sunset, Moon, Check, UserCircle, Lock, Wrench, Laptop } from 'lucide-react';
 import { SHIFTS } from '../../constants/shifts';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAdmin } from '../../utils/roles';
@@ -10,12 +10,17 @@ export function AssignShiftModal({
   date,
   people,
   shifts,
-  onToggleShift
+  onToggleShift,
+  team = 'noc'
 }) {
   const { user } = useAuth();
   const userIsAdmin = isAdmin(user);
 
   if (!isOpen) return null;
+
+  // Filtrar turnos y personas por equipo
+  const filteredShifts = shifts.filter(s => s.team === team);
+  const filteredPeople = people.filter(p => p.team === team);
 
   const dateObj = new Date(date + 'T00:00:00');
   const formattedDate = dateObj.toLocaleDateString('es-ES', {
@@ -27,7 +32,7 @@ export function AssignShiftModal({
 
   // Verificar si una persona tiene un turno específico
   const hasShift = (personId, shiftType) => {
-    return shifts.some(s =>
+    return filteredShifts.some(s =>
       s.person_id === personId &&
       s.date === date &&
       s.shift_type === shiftType
@@ -40,36 +45,53 @@ export function AssignShiftModal({
     if (!userIsAdmin) return;
 
     try {
-      await onToggleShift(personId, date, shiftType);
+      await onToggleShift(personId, date, shiftType, team);
     } catch (err) {
       console.error('Error toggling shift:', err);
     }
   };
 
-  // Orden: Noche, Mañana, Tarde
-  const shiftTypes = [
-    {
-      id: 'night',
-      label: 'Noche',
-      icon: Moon,
-      color: 'indigo',
-      time: '00:00 - 07:00'
-    },
-    {
-      id: 'morning',
-      label: 'Mañana',
-      icon: Sun,
-      color: 'yellow',
-      time: '08:00 - 15:00'
-    },
-    {
-      id: 'afternoon',
-      label: 'Tarde',
-      icon: Sunset,
-      color: 'orange',
-      time: '16:00 - 23:00'
-    }
-  ];
+  // Tipos de turno según el equipo
+  const shiftTypes = team === 'support'
+    ? [
+        {
+          id: 'support',
+          label: 'Turno Soporte',
+          icon: Wrench,
+          color: 'blue',
+          time: ''
+        },
+        {
+          id: 'tam',
+          label: 'Turno TAM',
+          icon: Laptop,
+          color: 'green',
+          time: ''
+        }
+      ]
+    : [
+        {
+          id: 'night',
+          label: 'Noche',
+          icon: Moon,
+          color: 'indigo',
+          time: '00:00 - 07:00'
+        },
+        {
+          id: 'morning',
+          label: 'Mañana',
+          icon: Sun,
+          color: 'yellow',
+          time: '08:00 - 15:00'
+        },
+        {
+          id: 'afternoon',
+          label: 'Tarde',
+          icon: Sunset,
+          color: 'orange',
+          time: '16:00 - 23:00'
+        }
+      ];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -104,12 +126,14 @@ export function AssignShiftModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {people.length === 0 ? (
+          {filteredPeople.length === 0 ? (
             <div className="text-center py-12">
               <UserCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 font-medium">No hay ingenieros registrados</p>
+              <p className="text-gray-600 font-medium">
+                No hay {team === 'noc' ? 'personal NOC' : 'ingenieros de soporte'} registrados
+              </p>
               <p className="text-sm text-gray-500 mt-1">
-                Agrega ingenieros desde "Gestionar Personal"
+                Agrega personal desde "Gestionar Personal"
               </p>
             </div>
           ) : (
@@ -120,7 +144,7 @@ export function AssignShiftModal({
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">
-                        Ingeniero
+                        {team === 'noc' ? 'Personal NOC' : 'Ingeniero'}
                       </th>
                       {shiftTypes.map(shift => (
                         <th key={shift.id} className="text-center py-3 px-4">
@@ -138,7 +162,7 @@ export function AssignShiftModal({
                     </tr>
                   </thead>
                   <tbody>
-                    {people.map(person => (
+                    {filteredPeople.map(person => (
                       <tr key={person.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
@@ -191,7 +215,7 @@ export function AssignShiftModal({
                 </h3>
                 <div className="grid grid-cols-3 gap-4">
                   {shiftTypes.map(shift => {
-                    const count = shifts.filter(s =>
+                    const count = filteredShifts.filter(s =>
                       s.date === date && s.shift_type === shift.id
                     ).length;
 
