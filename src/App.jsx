@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from './components/calendar/CalendarHeader';
 import { CalendarNavigation } from './components/calendar/CalendarNavigation';
 import { CalendarGrid } from './components/calendar/CalendarGrid';
@@ -7,20 +7,27 @@ import { PeopleModal } from './components/modals/PeopleModal';
 import { ShiftsCalendar } from './components/shifts/ShiftsCalendar';
 import { ShiftsStats } from './components/shifts/ShiftsStats';
 import { AssignShiftModal } from './components/modals/AssignShiftModal';
+import { ContactsView } from './components/contacts/ContactsView';
+import { ContactModal } from './components/modals/ContactModal';
 import { getDaysInMonth } from './utils';
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { useShifts } from './hooks/useShifts';
+import { fetchContacts, addContact, updateContact, deleteContact } from './services/supabaseService';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('calendar'); // 'calendar' o 'shifts'
+  const [currentView, setCurrentView] = useState('calendar'); // 'calendar', 'shifts' o 'contacts'
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [isPeopleModalOpen, setIsPeopleModalOpen] = useState(false);
   const [isAssignShiftModalOpen, setIsAssignShiftModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedShiftDate, setSelectedShiftDate] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingInstanceDate, setEditingInstanceDate] = useState(null);
+  const [editingContact, setEditingContact] = useState(null);
+  const [contacts, setContacts] = useState([]);
+  const [contactsLoading, setContactsLoading] = useState(true);
 
   // Hook de Supabase para manejar todos los datos de actividades
   const {
@@ -48,6 +55,59 @@ export default function App() {
   } = useShifts(currentDate);
 
   const { days, firstDay } = getDaysInMonth(currentDate);
+
+  // Cargar contactos
+  useEffect(() => {
+    loadContacts();
+  }, []);
+
+  const loadContacts = async () => {
+    try {
+      setContactsLoading(true);
+      const data = await fetchContacts();
+      setContacts(data);
+    } catch (err) {
+      console.error('Error loading contacts:', err);
+    } finally {
+      setContactsLoading(false);
+    }
+  };
+
+  const handleAddContact = () => {
+    setEditingContact(null);
+    setIsContactModalOpen(true);
+  };
+
+  const handleEditContact = (contact) => {
+    setEditingContact(contact);
+    setIsContactModalOpen(true);
+  };
+
+  const handleSaveContact = async (contactData) => {
+    try {
+      if (editingContact) {
+        await updateContact(editingContact.id, contactData);
+      } else {
+        await addContact(contactData);
+      }
+      await loadContacts();
+      setIsContactModalOpen(false);
+      setEditingContact(null);
+    } catch (err) {
+      console.error('Error saving contact:', err);
+    }
+  };
+
+  const handleDeleteContact = async (id) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este contacto?')) {
+      try {
+        await deleteContact(id);
+        await loadContacts();
+      } catch (err) {
+        console.error('Error deleting contact:', err);
+      }
+    }
+  };
 
   const changeMonth = (increment) => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1));
@@ -228,7 +288,14 @@ export default function App() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {currentView === 'calendar' ? (
+        {currentView === 'contacts' ? (
+          <ContactsView
+            contacts={contacts}
+            onAddContact={handleAddContact}
+            onEditContact={handleEditContact}
+            onDeleteContact={handleDeleteContact}
+          />
+        ) : currentView === 'calendar' ? (
           <>
             <CalendarNavigation
               currentDate={currentDate}
@@ -314,6 +381,18 @@ export default function App() {
           people={people}
           shifts={shifts}
           onToggleShift={handleToggleShift}
+        />
+      )}
+
+      {isContactModalOpen && (
+        <ContactModal
+          isOpen={isContactModalOpen}
+          onClose={() => {
+            setIsContactModalOpen(false);
+            setEditingContact(null);
+          }}
+          onSave={handleSaveContact}
+          initialData={editingContact}
         />
       )}
     </div>

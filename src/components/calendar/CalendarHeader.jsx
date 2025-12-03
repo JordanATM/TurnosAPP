@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Users, Plus, LogOut, User, ChevronDown, LayoutGrid, ClipboardList } from 'lucide-react';
+import { Calendar, Users, Plus, LogOut, User, ChevronDown, LayoutGrid, ClipboardList, Contact } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAdmin } from '../../utils/roles';
 
@@ -51,18 +51,39 @@ export function CalendarHeader({ onNewActivity, onManagePeople, currentView, onV
               <ClipboardList className="w-4 h-4" />
               <span>Turnos</span>
             </button>
+            <button
+              onClick={() => onViewChange('contacts')}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                currentView === 'contacts'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Contact className="w-4 h-4" />
+              <span>Contactos</span>
+            </button>
           </div>
 
           {/* Mobile View Toggle */}
           <div className="md:hidden">
             <button
-              onClick={() => onViewChange(currentView === 'calendar' ? 'shifts' : 'calendar')}
+              onClick={() => {
+                const views = ['calendar', 'shifts', 'contacts'];
+                const currentIndex = views.indexOf(currentView);
+                const nextIndex = (currentIndex + 1) % views.length;
+                onViewChange(views[nextIndex]);
+              }}
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
             >
               {currentView === 'calendar' ? (
                 <>
                   <ClipboardList className="w-4 h-4" />
                   <span>Turnos</span>
+                </>
+              ) : currentView === 'shifts' ? (
+                <>
+                  <Contact className="w-4 h-4" />
+                  <span>Contactos</span>
                 </>
               ) : (
                 <>

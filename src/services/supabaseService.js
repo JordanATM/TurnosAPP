@@ -219,3 +219,64 @@ export const addDeletedInstance = async (activityId, date) => {
 
   return data;
 };
+
+// ==================== CONTACTS ====================
+
+export const fetchContacts = async () => {
+  const { data, error } = await supabase
+    .from('contacts')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching contacts:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const addContact = async (contactData) => {
+  const { data, error } = await supabase
+    .from('contacts')
+    .insert([contactData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding contact:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const updateContact = async (id, contactData) => {
+  const { data, error } = await supabase
+    .from('contacts')
+    .update(contactData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating contact:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteContact = async (id) => {
+  const { error } = await supabase
+    .from('contacts')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting contact:', error);
+    throw error;
+  }
+
+  return true;
+};
