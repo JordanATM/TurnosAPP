@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sun, Sunset, Moon, Plus, Calendar as CalendarIcon, Lock, Users, Headset, Wrench, Laptop } from 'lucide-react';
+import { Sun, Sunset, Moon, Plus, Calendar as CalendarIcon, Lock, Users, Headset, Wrench, Laptop, Clock } from 'lucide-react';
 import { SHIFTS } from '../../constants/shifts';
 import { getDaysInMonth } from '../../utils/helpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -109,43 +109,55 @@ export function ShiftsCalendar({
 
       {/* Leyenda de turnos */}
       <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-        <div className="flex items-center gap-6 flex-wrap">
-          {selectedTeam === 'noc' ? (
-            <>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-yellow-100 border-2 border-yellow-400 rounded flex items-center justify-center">
-                  <Sun className="w-3 h-3 text-yellow-700" />
+        <div className="flex items-center justify-between gap-6 flex-wrap">
+          <div className="flex items-center gap-6 flex-wrap">
+            {selectedTeam === 'noc' ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-yellow-100 border-2 border-yellow-400 rounded flex items-center justify-center">
+                    <Sun className="w-3 h-3 text-yellow-700" />
+                  </div>
+                  <span className="text-sm text-gray-700">Mañana</span>
                 </div>
-                <span className="text-sm text-gray-700">Mañana</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-orange-100 border-2 border-orange-400 rounded flex items-center justify-center">
-                  <Sunset className="w-3 h-3 text-orange-700" />
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-orange-100 border-2 border-orange-400 rounded flex items-center justify-center">
+                    <Sunset className="w-3 h-3 text-orange-700" />
+                  </div>
+                  <span className="text-sm text-gray-700">Tarde</span>
                 </div>
-                <span className="text-sm text-gray-700">Tarde</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-indigo-100 border-2 border-indigo-400 rounded flex items-center justify-center">
-                  <Moon className="w-3 h-3 text-indigo-700" />
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-indigo-100 border-2 border-indigo-400 rounded flex items-center justify-center">
+                    <Moon className="w-3 h-3 text-indigo-700" />
+                  </div>
+                  <span className="text-sm text-gray-700">Noche</span>
                 </div>
-                <span className="text-sm text-gray-700">Noche</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-blue-100 border-2 border-blue-400 rounded flex items-center justify-center">
-                  <Wrench className="w-3 h-3 text-blue-700" />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-blue-100 border-2 border-blue-400 rounded flex items-center justify-center">
+                    <Wrench className="w-3 h-3 text-blue-700" />
+                  </div>
+                  <span className="text-sm text-gray-700">Turno Soporte</span>
                 </div>
-                <span className="text-sm text-gray-700">Turno Soporte</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-100 border-2 border-green-400 rounded flex items-center justify-center">
-                  <Laptop className="w-3 h-3 text-green-700" />
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-green-100 border-2 border-green-400 rounded flex items-center justify-center">
+                    <Laptop className="w-3 h-3 text-green-700" />
+                  </div>
+                  <span className="text-sm text-gray-700">Turno TAM</span>
                 </div>
-                <span className="text-sm text-gray-700">Turno TAM</span>
-              </div>
-            </>
+              </>
+            )}
+          </div>
+
+          {/* Tarjeta informativa para turnos de soporte */}
+          {selectedTeam === 'support' && (
+            <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2">
+              <Clock className="w-4 h-4 text-purple-600 flex-shrink-0" />
+              <span className="text-xs font-medium text-purple-800">
+                Cambio de Turnos: Viernes 18:00
+              </span>
+            </div>
           )}
         </div>
       </div>
