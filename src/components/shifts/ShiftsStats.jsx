@@ -6,13 +6,17 @@ export function ShiftsStats({ currentDate, shifts, people }) {
 
   // Calcular estadísticas
   const stats = useMemo(() => {
+    // Filtrar solo personal y turnos NOC
+    const nocPeople = people.filter(p => p.team === 'noc');
+    const nocShifts = shifts.filter(s => s.team === 'noc');
+
     const statsByPerson = {};
     let totalMorning = 0;
     let totalAfternoon = 0;
     let totalNight = 0;
 
-    // Inicializar para cada persona
-    people.forEach(person => {
+    // Inicializar para cada persona NOC
+    nocPeople.forEach(person => {
       statsByPerson[person.id] = {
         name: person.name,
         morning: 0,
@@ -23,8 +27,8 @@ export function ShiftsStats({ currentDate, shifts, people }) {
       };
     });
 
-    // Contar turnos
-    shifts.forEach(shift => {
+    // Contar turnos NOC
+    nocShifts.forEach(shift => {
       if (statsByPerson[shift.person_id]) {
         statsByPerson[shift.person_id][shift.shift_type]++;
         statsByPerson[shift.person_id].total++;
@@ -66,10 +70,10 @@ export function ShiftsStats({ currentDate, shifts, people }) {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900 capitalize">
-              Estadísticas - {monthName}
+              Estadísticas NOC - {monthName}
             </h2>
             <p className="text-sm text-gray-600">
-              Total de turnos asignados: {stats.total}
+              Total de turnos asignados (NOC): {stats.total}
             </p>
           </div>
         </div>
@@ -119,7 +123,7 @@ export function ShiftsStats({ currentDate, shifts, people }) {
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-gray-600" />
-            <h3 className="font-semibold text-gray-900">Distribución por Ingeniero</h3>
+            <h3 className="font-semibold text-gray-900">Distribución por Ingeniero NOC</h3>
           </div>
         </div>
 
@@ -204,12 +208,12 @@ export function ShiftsStats({ currentDate, shifts, people }) {
           </table>
         </div>
 
-        {people.length === 0 && (
+        {people.filter(p => p.team === 'noc').length === 0 && (
           <div className="px-6 py-12 text-center">
             <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No hay ingenieros registrados</p>
+            <p className="text-gray-500">No hay ingenieros NOC registrados</p>
             <p className="text-sm text-gray-400 mt-1">
-              Agrega ingenieros desde el botón "Gestionar Personal"
+              Agrega ingenieros NOC desde el botón "Gestionar Personal"
             </p>
           </div>
         )}
