@@ -296,3 +296,73 @@ export const deleteContact = async (id) => {
 
   return true;
 };
+
+// ==================== PROTOCOLS ====================
+
+export const fetchProtocols = async () => {
+  const { data, error } = await supabase
+    .from('protocols')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching protocols:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const addProtocol = async (protocolData) => {
+  const { data, error } = await supabase
+    .from('protocols')
+    .insert([{
+      name: protocolData.name,
+      type: protocolData.type || 'text',
+      instructions: protocolData.instructions
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding protocol:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const updateProtocol = async (id, protocolData) => {
+  const { data, error } = await supabase
+    .from('protocols')
+    .update({
+      name: protocolData.name,
+      type: protocolData.type || 'text',
+      instructions: protocolData.instructions,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating protocol:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteProtocol = async (id) => {
+  const { error } = await supabase
+    .from('protocols')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting protocol:', error);
+    throw error;
+  }
+
+  return true;
+};

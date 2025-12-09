@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Users, Plus, LogOut, User, ChevronDown, LayoutGrid, ClipboardList, Contact } from 'lucide-react';
+import { Calendar, Users, Plus, LogOut, User, ChevronDown, LayoutGrid, ClipboardList, Contact, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAdmin } from '../../utils/roles';
 
@@ -62,13 +62,24 @@ export function CalendarHeader({ onNewActivity, onManagePeople, currentView, onV
               <Contact className="w-4 h-4" />
               <span>Contactos</span>
             </button>
+            <button
+              onClick={() => onViewChange('protocols')}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                currentView === 'protocols'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Protocolos</span>
+            </button>
           </div>
 
           {/* Mobile View Toggle */}
           <div className="md:hidden">
             <button
               onClick={() => {
-                const views = ['calendar', 'shifts', 'contacts'];
+                const views = ['calendar', 'shifts', 'contacts', 'protocols'];
                 const currentIndex = views.indexOf(currentView);
                 const nextIndex = (currentIndex + 1) % views.length;
                 onViewChange(views[nextIndex]);
@@ -84,6 +95,11 @@ export function CalendarHeader({ onNewActivity, onManagePeople, currentView, onV
                 <>
                   <Contact className="w-4 h-4" />
                   <span>Contactos</span>
+                </>
+              ) : currentView === 'contacts' ? (
+                <>
+                  <FileText className="w-4 h-4" />
+                  <span>Protocolos</span>
                 </>
               ) : (
                 <>

@@ -9,26 +9,44 @@ import { ShiftsStats } from './components/shifts/ShiftsStats';
 import { AssignShiftModal } from './components/modals/AssignShiftModal';
 import { ContactsView } from './components/contacts/ContactsView';
 import { ContactModal } from './components/modals/ContactModal';
+import { ProtocolsView } from './components/protocols/ProtocolsView';
+import { ProtocolModal } from './components/modals/ProtocolModal';
+import { ProtocolDetailModal } from './components/modals/ProtocolDetailModal';
 import { getDaysInMonth } from './utils';
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { useShifts } from './hooks/useShifts';
-import { fetchContacts, addContact, updateContact, deleteContact } from './services/supabaseService';
+import {
+  fetchContacts,
+  addContact,
+  updateContact,
+  deleteContact,
+  fetchProtocols,
+  addProtocol,
+  updateProtocol,
+  deleteProtocol
+} from './services/supabaseService';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('calendar'); // 'calendar', 'shifts' o 'contacts'
+  const [currentView, setCurrentView] = useState('calendar'); // 'calendar', 'shifts', 'contacts' o 'protocols'
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [isPeopleModalOpen, setIsPeopleModalOpen] = useState(false);
   const [isAssignShiftModalOpen, setIsAssignShiftModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isProtocolModalOpen, setIsProtocolModalOpen] = useState(false);
+  const [isProtocolDetailModalOpen, setIsProtocolDetailModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedShiftDate, setSelectedShiftDate] = useState(null);
   const [selectedShiftTeam, setSelectedShiftTeam] = useState('noc');
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingInstanceDate, setEditingInstanceDate] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
+  const [editingProtocol, setEditingProtocol] = useState(null);
+  const [viewingProtocol, setViewingProtocol] = useState(null);
   const [contacts, setContacts] = useState([]);
+  const [protocols, setProtocols] = useState([]);
   const [contactsLoading, setContactsLoading] = useState(true);
+  const [protocolsLoading, setProtocolsLoading] = useState(true);
 
   // Hook de Supabase para manejar todos los datos de actividades
   const {
@@ -58,9 +76,10 @@ export default function App() {
 
   const { days, firstDay } = getDaysInMonth(currentDate);
 
-  // Cargar contactos
+  // Cargar contactos y protocolos
   useEffect(() => {
     loadContacts();
+    loadProtocols();
   }, []);
 
   const loadContacts = async () => {
@@ -72,6 +91,18 @@ export default function App() {
       console.error('Error loading contacts:', err);
     } finally {
       setContactsLoading(false);
+    }
+  };
+
+  const loadProtocols = async () => {
+    try {
+      setProtocolsLoading(true);
+      const data = await fetchProtocols();
+      setProtocols(data);
+    } catch (err) {
+      console.error('Error loading protocols:', err);
+    } finally {
+      setProtocolsLoading(false);
     }
   };
 
@@ -107,6 +138,48 @@ export default function App() {
         await loadContacts();
       } catch (err) {
         console.error('Error deleting contact:', err);
+      }
+    }
+  };
+
+  // Protocol handlers
+  const handleAddProtocol = () => {
+    setEditingProtocol(null);
+    setIsProtocolModalOpen(true);
+  };
+
+  const handleEditProtocol = (protocol) => {
+    setEditingProtocol(protocol);
+    setIsProtocolModalOpen(true);
+  };
+
+  const handleViewProtocol = (protocol) => {
+    setViewingProtocol(protocol);
+    setIsProtocolDetailModalOpen(true);
+  };
+
+  const handleSaveProtocol = async (protocolData) => {
+    try {
+      if (protocolData.id) {
+        await updateProtocol(protocolData.id, protocolData);
+      } else {
+        await addProtocol(protocolData);
+      }
+      await loadProtocols();
+      setIsProtocolModalOpen(false);
+      setEditingProtocol(null);
+    } catch (err) {
+      console.error('Error saving protocol:', err);
+    }
+  };
+
+  const handleDeleteProtocol = async (id) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este protocolo?')) {
+      try {
+        await deleteProtocol(id);
+        await loadProtocols();
+      } catch (err) {
+        console.error('Error deleting protocol:', err);
       }
     }
   };
@@ -301,7 +374,15 @@ export default function App() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {currentView === 'contacts' ? (
+        {currentView === 'protocols' ? (
+          <ProtocolsView
+            protocols={protocols}
+            onAdd={handleAddProtocol}
+            onEdit={handleEditProtocol}
+            onDelete={handleDeleteProtocol}
+            onView={handleViewProtocol}
+          />
+        ) : currentView === 'contacts' ? (
           <ContactsView
             contacts={contacts}
             onAddContact={handleAddContact}
@@ -408,6 +489,29 @@ export default function App() {
           }}
           onSave={handleSaveContact}
           initialData={editingContact}
+        />
+      )}
+
+      {isProtocolModalOpen && (
+        <ProtocolModal
+          isOpen={isProtocolModalOpen}
+          onClose={() => {
+            setIsProtocolModalOpen(false);
+            setEditingProtocol(null);
+          }}
+          onSave={handleSaveProtocol}
+          protocol={editingProtocol}
+        />
+      )}
+
+      {isProtocolDetailModalOpen && (
+        <ProtocolDetailModal
+          isOpen={isProtocolDetailModalOpen}
+          onClose={() => {
+            setIsProtocolDetailModalOpen(false);
+            setViewingProtocol(null);
+          }}
+          protocol={viewingProtocol}
         />
       )}
     </div>
