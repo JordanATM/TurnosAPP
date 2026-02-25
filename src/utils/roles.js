@@ -2,8 +2,8 @@
  * Utilidades para manejo de roles de usuario
  */
 
-// Email del administrador del sistema
-const ADMIN_EMAIL = 'jotorrejon@gmail.com';
+// Lista de emails de los administradores del sistema
+const ADMIN_EMAILS = ['jotorrejon@gmail.com', 'anunez@email.com'];
 
 /**
  * Verifica si un usuario es administrador
@@ -12,7 +12,10 @@ const ADMIN_EMAIL = 'jotorrejon@gmail.com';
  */
 export const isAdmin = (user) => {
   if (!user || !user.email) return false;
-  return user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  
+  // Usamos .includes() para verificar si el email está en la lista
+  // y convertimos a minúsculas para evitar errores de mayúsculas/minúsculas
+  return ADMIN_EMAILS.includes(user.email.toLowerCase());
 };
 
 /**
