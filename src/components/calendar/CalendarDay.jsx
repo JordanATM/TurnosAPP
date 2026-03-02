@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, RefreshCcw, Briefcase, CheckCircle2, Circle, Calendar } from 'lucide-react';
+import { Plus, RefreshCcw, Briefcase, CheckCircle2, Circle, Calendar, ChevronRight } from 'lucide-react';
 import { getShiftFromTime, getEngineersOnShift } from '../../utils';
 import { FREQUENCY } from '../../constants';
 
@@ -13,7 +13,8 @@ export function CalendarDay({
   shifts = [],
   onDayClick,
   onEditActivity,
-  onToggleCompletion
+  onToggleCompletion,
+  onViewAllTasks
 }) {
   const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
   dateObj.setHours(0, 0, 0, 0);
@@ -31,24 +32,19 @@ export function CalendarDay({
 
       if (dateObj < startDate) return false;
 
-      // Verificar si hay una fecha de finalización (para "desde esta fecha")
       if (a.endDate) {
         const [ey, em, ed] = a.endDate.split('-').map(Number);
         const endDate = new Date(ey, em - 1, ed);
         endDate.setHours(0, 0, 0, 0);
-
-        // No mostrar si la fecha actual es igual o posterior a la fecha de finalización
         if (dateObj >= endDate) return false;
       }
 
-      // Verificar si esta instancia específica fue eliminada
       const instanceKey = `${a.id}_${dateStr}`;
       if (deletedInstances && deletedInstances.includes(instanceKey)) return false;
 
       if (a.frequency === 'daily') return true;
       if (a.frequency === 'weekdays') return dayOfWeek !== 0 && dayOfWeek !== 6;
 
-      // Verificar días específicos de la semana
       if (a.frequency === 'monday') return dayOfWeek === 1;
       if (a.frequency === 'tuesday') return dayOfWeek === 2;
       if (a.frequency === 'wednesday') return dayOfWeek === 3;
@@ -62,21 +58,40 @@ export function CalendarDay({
     .map(a => ({ ...a, _displayDay: day }))
     .sort((a, b) => a.time.localeCompare(b.time));
 
+  // Solo mostrar 1 actividad en la vista del calendario
+  const visibleActivity = dayActivities[0] || null;
+  const hiddenCount = dayActivities.length - 1;
+
+  const completedCount = dayActivities.filter(a =>
+    completedInstances.includes(`${a.id}_${dateStr}`)
+  ).length;
+
   return (
     <div
       onClick={() => onDayClick(day)}
       className={`bg-white min-h-[120px] p-2 transition-colors hover:bg-gray-50 cursor-pointer relative group ${isToday ? 'bg-blue-50/30' : ''}`}
     >
-      <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-blue-600 text-white' : 'text-gray-700'}`}>
-        {day}
-      </span>
+      {/* Número del día */}
+      <div className="flex items-center justify-between mb-1.5">
+        <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-blue-600 text-white' : 'text-gray-700'}`}>
+          {day}
+        </span>
 
-      <div className="mt-2 space-y-1">
-        {dayActivities.map(activity => {
+        {/* Indicador de progreso si hay tareas */}
+        {dayActivities.length > 0 && (
+          <span className="text-[10px] text-gray-400 font-medium">
+            {completedCount}/{dayActivities.length}
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-1">
+        {/* Mostrar solo la primera actividad */}
+        {visibleActivity && (() => {
+          const activity = visibleActivity;
           const shift = getShiftFromTime(activity.time);
           const isCompleted = completedInstances.includes(`${activity.id}_${dateStr}`);
 
-          // Para actividades con auto_assign, calcular assignees dinámicamente
           const displayAssignees = activity.auto_assign && shift
             ? getEngineersOnShift(shifts, dateStr, shift.id)
             : activity.assignees;
@@ -133,9 +148,24 @@ export function CalendarDay({
               </div>
             </div>
           );
-        })}
+        })()}
+
+        {/* Botón "Ver todas" si hay más de 1 tarea */}
+        {hiddenCount > 0 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewAllTasks(day);
+            }}
+            className="w-full text-left flex items-center justify-between text-[11px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-md transition-colors"
+          >
+            <span>+{hiddenCount} tarea{hiddenCount > 1 ? 's' : ''} más</span>
+            <ChevronRight className="w-3 h-3" />
+          </button>
+        )}
       </div>
 
+      {/* Botón + al hacer hover */}
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="bg-gray-100 p-1 rounded-md hover:bg-gray-200">
           <Plus className="w-4 h-4 text-gray-600" />

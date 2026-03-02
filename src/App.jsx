@@ -12,6 +12,7 @@ import { ContactModal } from './components/modals/ContactModal';
 import { ProtocolsView } from './components/protocols/ProtocolsView';
 import { ProtocolModal } from './components/modals/ProtocolModal';
 import { ProtocolDetailModal } from './components/modals/ProtocolDetailModal';
+import { DayDetailModal } from './components/modals/DayDetailModal';
 import { getDaysInMonth } from './utils';
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { useShifts } from './hooks/useShifts';
@@ -35,6 +36,8 @@ export default function App() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isProtocolModalOpen, setIsProtocolModalOpen] = useState(false);
   const [isProtocolDetailModalOpen, setIsProtocolDetailModalOpen] = useState(false);
+  const [isDayDetailModalOpen, setIsDayDetailModalOpen] = useState(false);
+  const [selectedDayForDetail, setSelectedDayForDetail] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedShiftDate, setSelectedShiftDate] = useState(null);
   const [selectedShiftTeam, setSelectedShiftTeam] = useState('noc');
@@ -189,6 +192,16 @@ export default function App() {
   };
 
   const handleDayClick = (day) => {
+    setSelectedDayForDetail(day);
+    setIsDayDetailModalOpen(true);
+  };
+
+  const handleViewAllTasks = (day) => {
+    setSelectedDayForDetail(day);
+    setIsDayDetailModalOpen(true);
+  };
+
+  const handleNewActivityForDay = (day) => {
     setSelectedDay(day);
     setEditingActivity(null);
     setEditingInstanceDate(null);
@@ -410,6 +423,7 @@ export default function App() {
               onDayClick={handleDayClick}
               onEditActivity={handleEditActivity}
               onToggleCompletion={toggleCompletion}
+              onViewAllTasks={handleViewAllTasks}
             />
           </>
         ) : (
@@ -439,6 +453,29 @@ export default function App() {
           </>
         )}
       </main>
+
+      {isDayDetailModalOpen && (
+        <DayDetailModal
+          isOpen={isDayDetailModalOpen}
+          onClose={() => {
+            setIsDayDetailModalOpen(false);
+            setSelectedDayForDetail(null);
+          }}
+          day={selectedDayForDetail}
+          currentDate={currentDate}
+          activities={activities}
+          deletedInstances={deletedInstances}
+          completedInstances={completedInstances}
+          people={people}
+          shifts={shifts}
+          onToggleCompletion={toggleCompletion}
+          onEditActivity={(e, activity, dateStr) => {
+            setIsDayDetailModalOpen(false);
+            handleEditActivity(e, activity, dateStr);
+          }}
+          onNewActivity={handleNewActivityForDay}
+        />
+      )}
 
       {isActivityModalOpen && (
         <ActivityModal

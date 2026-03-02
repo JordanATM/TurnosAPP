@@ -13,7 +13,8 @@ export function CalendarGrid({
   shifts,
   onDayClick,
   onEditActivity,
-  onToggleCompletion
+  onToggleCompletion,
+  onViewAllTasks
 }) {
   return (
     <div className="bg-white rounded-xl shadow ring-1 ring-gray-200 overflow-hidden">
@@ -49,6 +50,7 @@ export function CalendarGrid({
               onDayClick={onDayClick}
               onEditActivity={onEditActivity}
               onToggleCompletion={onToggleCompletion}
+              onViewAllTasks={onViewAllTasks}
             />
           );
         })}
