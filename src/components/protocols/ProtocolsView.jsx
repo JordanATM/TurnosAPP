@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Plus, Eye, Pencil, Trash2, ListChecks } from 'lucide-react';
+import { FileText, Plus, Eye, Pencil, Trash2, ListChecks, History } from 'lucide-react';
 import { isAdmin } from '../../utils/roles';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -8,7 +8,9 @@ export function ProtocolsView({
   onAdd,
   onEdit,
   onDelete,
-  onView
+  onView,
+  onViewHistory,
+  onViewGlobalHistory
 }) {
   const { user } = useAuth();
   const userIsAdmin = isAdmin(user);
@@ -17,7 +19,7 @@ export function ProtocolsView({
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <FileText className="w-6 h-6 text-blue-600" />
@@ -30,15 +32,25 @@ export function ProtocolsView({
             </div>
           </div>
 
-          {userIsAdmin && (
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={onAdd}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={onViewGlobalHistory}
+              className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-medium shadow-sm"
+              title="Ver registro de todas las ejecuciones"
             >
-              <Plus className="w-5 h-5" />
-              <span>Nuevo Protocolo</span>
+              <History className="w-5 h-5 text-gray-500" />
+              <span>Historial Global</span>
             </button>
-          )}
+            {userIsAdmin && (
+              <button
+                onClick={onAdd}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Nuevo Protocolo</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -64,18 +76,22 @@ export function ProtocolsView({
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${protocol.type === 'checklist' ? 'bg-blue-100' : 'bg-gray-100'
+                    }`}>
                     {protocol.type === 'checklist' ? (
                       <ListChecks className="w-5 h-5 text-blue-600" />
                     ) : (
-                      <FileText className="w-5 h-5 text-blue-600" />
+                      <FileText className="w-5 h-5 text-gray-500" />
                     )}
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900 line-clamp-2">
                       {protocol.name}
                     </h3>
-                    <span className="text-xs text-gray-500">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${protocol.type === 'checklist'
+                      ? 'text-blue-700 bg-blue-50'
+                      : 'text-gray-600 bg-gray-100'
+                      }`}>
                       {protocol.type === 'checklist' ? 'Checklist' : 'Texto'}
                     </span>
                   </div>
@@ -87,12 +103,32 @@ export function ProtocolsView({
                   onClick={() => onView(protocol)}
                   className="flex-1 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
                 >
-                  <Eye className="w-4 h-4" />
-                  <span className="text-sm font-medium">Ver Protocolo</span>
+                  {protocol.type === 'checklist' ? (
+                    <>
+                      <ListChecks className="w-4 h-4" />
+                      <span className="text-sm font-medium">Ejecutar</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      <span className="text-sm font-medium">Ver Protocolo</span>
+                    </>
+                  )}
                 </button>
 
+                {/* Botón historial solo para checklists */}
+                {protocol.type === 'checklist' && (
+                  <button
+                    onClick={() => onViewHistory(protocol)}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Ver historial de ejecuciones"
+                  >
+                    <History className="w-4 h-4" />
+                  </button>
+                )}
+
                 {userIsAdmin && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <button
                       onClick={() => onEdit(protocol)}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

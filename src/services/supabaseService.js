@@ -366,3 +366,87 @@ export const deleteProtocol = async (id) => {
 
   return true;
 };
+
+// ==================== CHECKLIST EXECUTIONS ====================
+
+export const fetchChecklistExecutions = async (protocolId) => {
+  const { data, error } = await supabase
+    .from('checklist_executions')
+    .select('*')
+    .eq('protocol_id', protocolId)
+    .order('started_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching checklist executions:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const fetchGlobalChecklistExecutions = async () => {
+  const { data, error } = await supabase
+    .from('checklist_executions')
+    .select(`
+      *,
+      protocol:protocols(name)
+    `)
+    .order('started_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching global checklist executions:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const createChecklistExecution = async ({ protocolId, operatorName, ticketNumber, totalSteps }) => {
+  const { data, error } = await supabase
+    .from('checklist_executions')
+    .insert([{
+      protocol_id: protocolId,
+      operator_name: operatorName,
+      ticket_number: ticketNumber,
+      total_steps: totalSteps,
+      completed_steps: [],
+      step_comments: {},
+      status: 'in_progress'
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating checklist execution:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const updateChecklistExecution = async (id, { completedSteps, stepComments, status }) => {
+  const updateData = {
+    completed_steps: completedSteps,
+    step_comments: stepComments,
+    status,
+    updated_at: new Date().toISOString()
+  };
+
+  if (status === 'completed') {
+    updateData.completed_at = new Date().toISOString();
+  }
+
+  const { data, error } = await supabase
+    .from('checklist_executions')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating checklist execution:', error);
+    throw error;
+  }
+
+  return data;
+};

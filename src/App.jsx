@@ -12,6 +12,7 @@ import { ContactModal } from './components/modals/ContactModal';
 import { ProtocolsView } from './components/protocols/ProtocolsView';
 import { ProtocolModal } from './components/modals/ProtocolModal';
 import { ProtocolDetailModal } from './components/modals/ProtocolDetailModal';
+import { GlobalChecklistHistoryModal } from './components/modals/GlobalChecklistHistoryModal';
 import { DayDetailModal } from './components/modals/DayDetailModal';
 import { getDaysInMonth } from './utils';
 import { useSupabaseData } from './hooks/useSupabaseData';
@@ -36,6 +37,9 @@ export default function App() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isProtocolModalOpen, setIsProtocolModalOpen] = useState(false);
   const [isProtocolDetailModalOpen, setIsProtocolDetailModalOpen] = useState(false);
+  const [isGlobalHistoryModalOpen, setIsGlobalHistoryModalOpen] = useState(false);
+  const [protocolDetailInitialPhase, setProtocolDetailInitialPhase] = useState('start');
+  const [protocolDetailInitialExecution, setProtocolDetailInitialExecution] = useState(null);
   const [isDayDetailModalOpen, setIsDayDetailModalOpen] = useState(false);
   const [selectedDayForDetail, setSelectedDayForDetail] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -158,7 +162,30 @@ export default function App() {
 
   const handleViewProtocol = (protocol) => {
     setViewingProtocol(protocol);
+    setProtocolDetailInitialPhase(protocol.type === 'checklist' ? 'start' : 'view');
     setIsProtocolDetailModalOpen(true);
+  };
+
+  const handleViewProtocolHistory = (protocol) => {
+    setViewingProtocol(protocol);
+    setProtocolDetailInitialPhase('history');
+    setProtocolDetailInitialExecution(null);
+    setIsProtocolDetailModalOpen(true);
+  };
+
+  const handleContinueGlobalExecution = (exec) => {
+    setIsGlobalHistoryModalOpen(false);
+
+    // Buscar el protocolo completo 
+    const fullProtocol = protocols.find(p => p.id === exec.protocol_id);
+    if (fullProtocol) {
+      setViewingProtocol(fullProtocol);
+      setProtocolDetailInitialPhase('executing');
+      setProtocolDetailInitialExecution(exec);
+      setIsProtocolDetailModalOpen(true);
+    } else {
+      alert('El protocolo asociado a esta ejecución ya no se encuentra disponible (pudo haber sido eliminado).');
+    }
   };
 
   const handleSaveProtocol = async (protocolData) => {
@@ -394,6 +421,8 @@ export default function App() {
             onEdit={handleEditProtocol}
             onDelete={handleDeleteProtocol}
             onView={handleViewProtocol}
+            onViewHistory={handleViewProtocolHistory}
+            onViewGlobalHistory={() => setIsGlobalHistoryModalOpen(true)}
           />
         ) : currentView === 'contacts' ? (
           <ContactsView
@@ -547,8 +576,20 @@ export default function App() {
           onClose={() => {
             setIsProtocolDetailModalOpen(false);
             setViewingProtocol(null);
+            setProtocolDetailInitialPhase('start');
+            setProtocolDetailInitialExecution(null);
           }}
           protocol={viewingProtocol}
+          initialPhase={protocolDetailInitialPhase}
+          initialExecution={protocolDetailInitialExecution}
+        />
+      )}
+
+      {isGlobalHistoryModalOpen && (
+        <GlobalChecklistHistoryModal
+          isOpen={isGlobalHistoryModalOpen}
+          onClose={() => setIsGlobalHistoryModalOpen(false)}
+          onContinueExecution={handleContinueGlobalExecution}
         />
       )}
     </div>
