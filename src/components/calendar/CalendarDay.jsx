@@ -114,7 +114,6 @@ export function CalendarDay({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 font-bold mb-0.5">
                     <shift.icon className="w-3 h-3" />
-                    <span>{activity.time}</span>
                     {activity.frequency === 'daily' && <RefreshCcw className="w-3 h-3 ml-auto opacity-60" />}
                     {activity.frequency === 'weekdays' && <Briefcase className="w-3 h-3 ml-auto opacity-60" />}
                     {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].includes(activity.frequency) && (

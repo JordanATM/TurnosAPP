@@ -7,7 +7,6 @@ import {
   Briefcase,
   Calendar,
   Plus,
-  Clock,
   Users,
   ChevronRight,
   Sun,
@@ -299,8 +298,6 @@ export function DayDetailModal({
                       onClick={(e) => userCanManage && onEditActivity(e, activity, dateStr)}
                     >
                       <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                        <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span className="text-xs font-semibold text-gray-500">{activity.time}</span>
                         {shift && (
                           <span className={`flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full border ${shift.color}`}>
                             <shift.icon className="w-2.5 h-2.5" />
