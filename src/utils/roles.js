@@ -38,9 +38,10 @@ export const canManagePeople = (user) => {
 
 /**
  * Verifica si un usuario puede agregar, modificar o eliminar actividades
+ * Cualquier usuario autenticado puede gestionar actividades.
  * @param {Object} user - Objeto de usuario de Supabase
  * @returns {boolean}
  */
 export const canManageActivities = (user) => {
-  return isAdmin(user);
+  return !!user;
 };
