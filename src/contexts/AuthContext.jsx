@@ -41,8 +41,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      // scope:'local' solo limpia la sesión local sin necesitar
+      // contactar al servidor (evita el 403 cuando la sesión ya expiró)
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) throw error;
+    } catch (err) {
+      // Si la sesión ya no existe en el servidor, simplemente limpiamos el estado local
+      if (err?.name === 'AuthSessionMissingError' || err?.message?.includes('Auth session missing')) {
+        setUser(null);
+        return;
+      }
+      throw err;
+    }
   };
 
   const value = {

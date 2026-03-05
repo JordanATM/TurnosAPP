@@ -260,49 +260,52 @@ export default function App() {
   };
 
   const saveActivity = async (activityData, saveOption) => {
+    // Extraer shiftPayloads (nuevo campo de control, no va a la BD)
+    const { shiftPayloads = [], ...cleanActivityData } = activityData;
+
+    // Para edición: usar la hora del primer shiftPayload si existe
+    const primaryPayload = shiftPayloads[0];
+    const timeOverride = primaryPayload?.time ?? cleanActivityData.time ?? '08:00';
+    const editActivityData = { ...cleanActivityData, time: timeOverride };
+
     try {
       if (editingActivity && editingInstanceDate) {
-        // Editando una instancia específica de una actividad recurrente
+        // ── Editar instancia específica de actividad recurrente ──
         if (saveOption === 'thisOnly') {
-          // Crear una nueva actividad para esta fecha específica
-          const newActivity = {
-            ...activityData,
-            frequency: 'once',
-            date: editingInstanceDate
-          };
+          const newActivity = { ...editActivityData, frequency: 'once', date: editingInstanceDate };
           await handleAddActivity(newActivity);
-
-          // Marcar la instancia original como eliminada
           await handleAddDeletedInstance(editingActivity.id, editingInstanceDate);
         } else if (saveOption === 'fromThisDate') {
-          // Modificar desde esta fecha en adelante
-          // 1. Agregar endDate a la actividad original (terminarla antes de esta fecha)
-          const originalWithEnd = {
-            ...editingActivity,
-            endDate: editingInstanceDate
-          };
-          await handleUpdateActivity(editingActivity.id, originalWithEnd);
-
-          // 2. Crear una nueva actividad recurrente desde esta fecha con los nuevos datos
-          const newRecurringActivity = {
-            ...activityData,
-            date: editingInstanceDate
-          };
-          await handleAddActivity(newRecurringActivity);
+          await handleUpdateActivity(editingActivity.id, { ...editingActivity, endDate: editingInstanceDate });
+          await handleAddActivity({ ...editActivityData, date: editingInstanceDate });
         } else {
-          // Guardar para toda la serie
-          await handleUpdateActivity(editingActivity.id, activityData);
+          await handleUpdateActivity(editingActivity.id, editActivityData);
         }
       } else if (editingActivity) {
-        // Editando una actividad que no es recurrente o editando la serie completa
-        await handleUpdateActivity(editingActivity.id, activityData);
+        // ── Editar serie completa ──
+        await handleUpdateActivity(editingActivity.id, editActivityData);
       } else {
-        // Creando nueva actividad
+        // ── Crear nueva(s) actividad(es) ──
         const dateStr = selectedDay
           ? `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
           : new Date().toISOString().split('T')[0];
 
-        await handleAddActivity({ ...activityData, date: dateStr });
+        if (shiftPayloads.length > 0) {
+          // Crear una actividad por cada turno seleccionado, en paralelo
+          const promises = shiftPayloads.map(({ time, assignees, auto_assign }) =>
+            handleAddActivity({
+              ...cleanActivityData,
+              date: dateStr,
+              time,
+              assignees: assignees ?? [],
+              auto_assign: auto_assign ?? false,
+            })
+          );
+          await Promise.all(promises);
+        } else {
+          // Fallback: guardar sin shiftPayloads (no debería ocurrir con el nuevo modal)
+          await handleAddActivity({ ...cleanActivityData, date: dateStr });
+        }
       }
 
       setIsActivityModalOpen(false);
