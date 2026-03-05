@@ -93,7 +93,8 @@ export const addActivity = async (activityData) => {
     end_date: activityData.endDate || null,
     description: activityData.description || null,
     assignees: activityData.assignees || [],
-    auto_assign: activityData.auto_assign || false
+    auto_assign: activityData.auto_assign || false,
+    client_name: activityData.client_name || null
   };
 
   const { data, error } = await supabase
@@ -123,7 +124,8 @@ export const updateActivity = async (id, activityData) => {
     end_date: activityData.endDate || null,
     description: activityData.description || null,
     assignees: activityData.assignees || [],
-    auto_assign: activityData.auto_assign || false
+    auto_assign: activityData.auto_assign || false,
+    client_name: activityData.client_name || null
   };
 
   const { data, error } = await supabase

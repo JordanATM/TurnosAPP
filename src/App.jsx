@@ -17,6 +17,8 @@ import { DayDetailModal } from './components/modals/DayDetailModal';
 import { getDaysInMonth } from './utils';
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { useShifts } from './hooks/useShifts';
+import { useAuth } from './contexts/AuthContext';
+import { canManageActivities } from './utils/roles';
 import {
   fetchContacts,
   addContact,
@@ -28,7 +30,10 @@ import {
   deleteProtocol
 } from './services/supabaseService';
 
+
 export default function App() {
+  const { user } = useAuth();
+  const userCanManage = canManageActivities(user);
   const [currentView, setCurrentView] = useState('calendar'); // 'calendar', 'shifts', 'contacts' o 'protocols'
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
@@ -229,6 +234,7 @@ export default function App() {
   };
 
   const handleNewActivityForDay = (day) => {
+    if (!userCanManage) return;
     setSelectedDay(day);
     setEditingActivity(null);
     setEditingInstanceDate(null);
@@ -236,6 +242,7 @@ export default function App() {
   };
 
   const handleEditActivity = (e, activity, instanceDate) => {
+    if (!userCanManage) return;
     e.stopPropagation();
     setSelectedDay(new Date(currentDate.getFullYear(), currentDate.getMonth(), activity._displayDay || 1).getDate());
     setEditingActivity(activity);
@@ -363,6 +370,7 @@ export default function App() {
   };
 
   const handleNewActivity = () => {
+    if (!userCanManage) return;
     setSelectedDay(new Date().getDate());
     setEditingActivity(null);
     setIsActivityModalOpen(true);

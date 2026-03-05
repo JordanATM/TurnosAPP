@@ -31,44 +31,40 @@ export function CalendarHeader({ onNewActivity, onManagePeople, currentView, onV
           <div className="hidden md:flex items-center bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => onViewChange('calendar')}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                currentView === 'calendar'
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${currentView === 'calendar'
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               <LayoutGrid className="w-4 h-4" />
               <span>Calendario</span>
             </button>
             <button
               onClick={() => onViewChange('shifts')}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                currentView === 'shifts'
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${currentView === 'shifts'
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               <ClipboardList className="w-4 h-4" />
               <span>Turnos</span>
             </button>
             <button
               onClick={() => onViewChange('contacts')}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                currentView === 'contacts'
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${currentView === 'contacts'
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               <Contact className="w-4 h-4" />
               <span>Contactos</span>
             </button>
             <button
               onClick={() => onViewChange('protocols')}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                currentView === 'protocols'
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${currentView === 'protocols'
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               <FileText className="w-4 h-4" />
               <span>Protocolos</span>
@@ -120,13 +116,15 @@ export function CalendarHeader({ onNewActivity, onManagePeople, currentView, onV
               <span className="hidden sm:inline">Personal</span>
             </button>
           )}
-          <button
-            onClick={onNewActivity}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 shadow-sm transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Nueva Actividad</span>
-          </button>
+          {userIsAdmin && (
+            <button
+              onClick={onNewActivity}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 shadow-sm transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Nueva Actividad</span>
+            </button>
+          )}
 
           {/* User Menu */}
           <div className="relative">

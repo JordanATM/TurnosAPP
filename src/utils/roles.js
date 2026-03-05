@@ -12,7 +12,7 @@ const ADMIN_EMAILS = ['jotorrejon@gmail.com', 'anunez@email.com'];
  */
 export const isAdmin = (user) => {
   if (!user || !user.email) return false;
-  
+
   // Usamos .includes() para verificar si el email está en la lista
   // y convertimos a minúsculas para evitar errores de mayúsculas/minúsculas
   return ADMIN_EMAILS.includes(user.email.toLowerCase());
@@ -33,5 +33,14 @@ export const canModifyShifts = (user) => {
  * @returns {boolean}
  */
 export const canManagePeople = (user) => {
+  return isAdmin(user);
+};
+
+/**
+ * Verifica si un usuario puede agregar, modificar o eliminar actividades
+ * @param {Object} user - Objeto de usuario de Supabase
+ * @returns {boolean}
+ */
+export const canManageActivities = (user) => {
   return isAdmin(user);
 };

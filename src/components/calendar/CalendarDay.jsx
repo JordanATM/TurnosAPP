@@ -2,6 +2,8 @@ import React from 'react';
 import { Plus, RefreshCcw, Briefcase, CheckCircle2, Circle, Calendar, ChevronRight } from 'lucide-react';
 import { getShiftFromTime, getEngineersOnShift } from '../../utils';
 import { FREQUENCY } from '../../constants';
+import { useAuth } from '../../contexts/AuthContext';
+import { canManageActivities } from '../../utils/roles';
 
 export function CalendarDay({
   day,
@@ -16,6 +18,8 @@ export function CalendarDay({
   onToggleCompletion,
   onViewAllTasks
 }) {
+  const { user } = useAuth();
+  const userCanManage = canManageActivities(user);
   const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
   dateObj.setHours(0, 0, 0, 0);
   const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -103,8 +107,8 @@ export function CalendarDay({
           return (
             <div
               key={`${activity.id}-${day}`}
-              onClick={(e) => onEditActivity(e, activity, dateStr)}
-              className={`text-xs p-1.5 rounded border mb-1 cursor-pointer hover:shadow-md transition-all group/card ${cardStyle}`}
+              onClick={(e) => userCanManage ? onEditActivity(e, activity, dateStr) : e.stopPropagation()}
+              className={`text-xs p-1.5 rounded border mb-1 transition-all group/card ${cardStyle} ${userCanManage ? 'cursor-pointer hover:shadow-md' : 'cursor-default'}`}
             >
               <div className="flex items-start justify-between gap-1">
                 <div className="flex-1 min-w-0">
@@ -165,12 +169,14 @@ export function CalendarDay({
         )}
       </div>
 
-      {/* Botón + al hacer hover */}
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="bg-gray-100 p-1 rounded-md hover:bg-gray-200">
-          <Plus className="w-4 h-4 text-gray-600" />
+      {/* Botón + al hacer hover – solo para admins */}
+      {userCanManage && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="bg-gray-100 p-1 rounded-md hover:bg-gray-200">
+            <Plus className="w-4 h-4 text-gray-600" />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
